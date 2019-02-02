@@ -1,0 +1,30 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+table, td {
+  border: 1px solid #000;
+}
+td {
+  width: 15px;
+}
+td.active:hover {
+  background-color: #0e76a8;
+  cursor: pointer;
+}
+td.missed {
+  background: #add8e6;
+}
+td.hit {
+  background: #7c1212;
+}
+
+.container {
+  margin: 10px;
+  float: left;
+}
