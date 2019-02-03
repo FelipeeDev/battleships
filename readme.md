@@ -13,21 +13,23 @@ All the application's sources are in `src` directory.
 
 ### Running from browser - Web Version
 
-Just open `public/index.html` from your browser.
+Just open `public/index.html` in your browser.
 
 ### Running from console - Console Version
 
 From the console run:
 
 ```
-> node bin/run
+> node src/console.js
 ```
 
 ### Build
 
 First run from console in the application's main directory:
 
-`npm install`
+```
+> npm install
+```
 
 then:
 

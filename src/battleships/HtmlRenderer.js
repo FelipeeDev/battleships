@@ -1,4 +1,4 @@
-export default function htmlRenderer(battleShips, cols, rows) {
+function HtmlRenderer(battleShips) {
     const TARGET = 'target';
     const TARGET_ACTION = 'target-action';
 
@@ -25,7 +25,8 @@ export default function htmlRenderer(battleShips, cols, rows) {
             table = document.createElement('table'),
             tr = document.createElement('tr'),
             th = document.createElement('th'),
-            firstLetter = 'A'.charCodeAt(0);
+            firstLetter = 'A'.charCodeAt(0),
+            cols = battleShips.getBoardService().getCols();
 
         table.setAttribute('class', 'bordered');
         tr.append(th);
@@ -37,7 +38,7 @@ export default function htmlRenderer(battleShips, cols, rows) {
         }
         table.append(tr);
 
-        for (let i = 0; i <= rows - 1; i++) {
+        for (let i = 0; i <= battleShips.getBoardService().getRows() - 1; i++) {
             let tr = document.createElement('tr'),
                 th = document.createElement('th');
             th.innerText = i+1;
@@ -71,7 +72,7 @@ export default function htmlRenderer(battleShips, cols, rows) {
         button.setAttribute('type', 'button');
         button.innerText = 'Strike';
 
-        container.append(label);
+        container.innerHTML = label.outerHTML;
         container.append(input);
         container.append(button);
 
@@ -97,4 +98,6 @@ export default function htmlRenderer(battleShips, cols, rows) {
             renderAction();
         }
     };
-};
+}
+
+module.exports = HtmlRenderer;

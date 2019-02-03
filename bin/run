@@ -1,1 +1,1 @@
-print('sds');
+require('src/console.js');

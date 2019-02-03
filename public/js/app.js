@@ -81,93 +81,32 @@
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ 	return __webpack_require__(__webpack_require__.s = 4);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ (function(module, exports) {
 
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-
-// CONCATENATED MODULE: ./src/battleships/battleshipsGame.js
-function battleShipsApp(ships, cols = 10, rows = 10) {
-    let observers = {
+function BattleShipsApp(shipService, ships) {
+    let boardService = shipService.getBoardService(),
+        observers = {
             onInit: [],
             onSelect: [],
             onResult: [],
         },
-        shuffledFields = [],
-        occupiedFields = {},
         moves = 0,
         shipCount = ships.length,
         shipsSank = 0;
 
-    let makeShip = function (len) {
-        if (!shuffledFields.length) {
-            throw "No more space for ships. Try to reduce the number of ships.";
-        }
-        let field = shuffledFields.shift(),
-            col = field.col,
-            row = field.row,
-            horizontal = Math.random() >= 0.5,
-            obj = {
-                len: len,
-                hit: 0,
-                isSank: function () {
-                    return this.hit >= this.len;
-                }
-            };
-
-        if (occupiedFields[col + '_' + row]
-            || (horizontal && col + len > cols)
-            || (!horizontal && row + len > rows)
-        ) {
-            makeShip(len);
-            return;
-        }
-
-
-        for (let i = 1; i <= len-1; i++) {
-            if ((horizontal && occupiedFields[(col + i) + '_' + row])
-                || (!horizontal && occupiedFields[col + '_' + (row + i)])) {
-                makeShip(len);
-                return;
-            }
-        }
-
-        occupiedFields[col + '_' + row] = obj;
-        for (let i = 1; i <= len-1; i++) {
-            if (horizontal) {
-                occupiedFields[(col + i) + '_' + row] = obj;
-                continue;
-            }
-            occupiedFields[col + '_' + (row + i)] = obj;
-        }
-    };
-
     let init = function() {
-        shuffledFields = shuffleFields();
-        occupiedFields = {};
         moves = 0;
         shipsSank = 0;
+        boardService.reset();
         for (let i in ships) {
-            makeShip(ships[i]);
+            shipService.makeShip(ships[i]);
         }
         triggerEvent('onInit')
-    };
-
-    let shuffleFields = function () {
-        let arr = [];
-
-        for (let i = 0; i <= cols - 1; i++) {
-            for (let j = 0; j <= rows - 1; j++) {
-                arr.splice(Math.floor(Math.random() * (arr.length+1)), 0, {col: i, row:j});
-            }
-        }
-
-        return arr;
     };
 
     let triggerEvent = function (event, ...args) {
@@ -220,22 +159,21 @@ function battleShipsApp(ships, cols = 10, rows = 10) {
             return this;
         },
         selectField: function (col, row) {
-            let key = col + '_' + row,
-                hit = occupiedFields[key];
+            let hit = boardService.isOccupied(col, row);
 
             triggerEvent('onSelect', col, row, hit);
 
             moves++;
 
-
             if (!hit) {
                 shotMissed();
                 return;
             }
+            let ship = boardService.get(col, row);
 
-            occupiedFields[key].hit++;
+            ship.hit++;
 
-            if (occupiedFields[key].isSank()) {
+            if (ship.isSank()) {
                 shipSank();
                 shipsSank++;
                 if (shipsSank >= shipCount) {
@@ -250,6 +188,7 @@ function battleShipsApp(ships, cols = 10, rows = 10) {
             let colChar = value[0],
                 col = null,
                 row = parseInt(value.slice(1)),
+                cols = boardService.getCols(),
                 letterCode = 'A'.charCodeAt(0);
 
             if (colChar) {
@@ -264,7 +203,7 @@ function battleShipsApp(ships, cols = 10, rows = 10) {
             }
 
             if (col !== null && col >= 0 && col <= cols - 1
-                && !isNaN(row) && row >= 1 && row - 1 <= rows - 1
+                && !isNaN(row) && row >= 1 && row - 1 <= boardService.getRows() - 1
             ) {
                 this.selectField(col, row - 1);
 
@@ -272,12 +211,130 @@ function battleShipsApp(ships, cols = 10, rows = 10) {
             }
 
             throw "There is no field: " + value + ". Try again!";
+        },
+        getBoardService() {
+            return boardService;
         }
     }
-};
+}
 
-// CONCATENATED MODULE: ./src/battleships/htmlRenderer.js
-function htmlRenderer(battleShips, cols, rows) {
+module.exports = BattleShipsApp;
+
+/***/ }),
+/* 1 */
+/***/ (function(module, exports) {
+
+function ShipService (boardService) {
+    let createShip = function (len) {
+        return {
+            len: len,
+            hit: 0,
+            isSank: function () {
+                return this.hit >= this.len;
+            }
+        };
+    };
+
+    return {
+        makeShip: function (len) {
+            let field = boardService.shiftField(),
+                col = field.col,
+                row = field.row,
+                horizontal = Math.random() >= 0.5,
+                ship = createShip(len);
+
+            if (boardService.isOccupied(col, row)
+                || (horizontal && col + len > boardService.getCols())
+                || (!horizontal && row + len > boardService.getRows())
+            ) {
+                return this.makeShip(len);
+            }
+
+            for (let i = 1; i <= len-1; i++) {
+                if ((horizontal && boardService.isOccupied(col + i, row))
+                    || (!horizontal && boardService.isOccupied(col, row + i))) {
+                    return this.makeShip(len);
+                }
+            }
+
+            boardService.occupy(col, row, ship);
+            for (let i = 1; i <= len-1; i++) {
+                if (horizontal) {
+                    boardService.occupy(col + i, row, ship);
+                    continue;
+                }
+                boardService.occupy(col, row + i, ship);
+            }
+
+            return ship;
+        },
+        getBoardService() {
+            return boardService;
+        }
+    };
+}
+
+module.exports = ShipService;
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports) {
+
+function BoardService(cols, rows) {
+    let fields = [],
+        occupied = {};
+
+    let shuffleFields = function () {
+        let arr = [];
+
+        for (let i = 0; i <= cols - 1; i++) {
+            for (let j = 0; j <= rows - 1; j++) {
+                arr.splice(Math.floor(Math.random() * (arr.length+1)), 0, {col: i, row:j});
+            }
+        }
+
+        return arr;
+    };
+
+    return {
+        reset() {
+            fields = shuffleFields();
+            occupied = {};
+        },
+        getFields: function () {
+            return fields;
+        },
+        occupy: function (col, row, ship) {
+            occupied[col + '_' + row] = ship;
+        },
+        isOccupied: function (col, row) {
+            return Boolean(occupied[col + '_' + row]);
+        },
+        get: function (col, row) {
+            return occupied[col + '_' + row];
+        },
+        getCols: function () {
+            return cols;
+        },
+        getRows: function () {
+            return rows;
+        },
+        shiftField: function () {
+            if (!fields.length) {
+                throw "No more space for ships. Try to reduce the number of ships.";
+            }
+            return fields.shift();
+        }
+    }
+}
+
+module.exports = BoardService;
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports) {
+
+function HtmlRenderer(battleShips) {
     const TARGET = 'target';
     const TARGET_ACTION = 'target-action';
 
@@ -304,7 +361,8 @@ function htmlRenderer(battleShips, cols, rows) {
             table = document.createElement('table'),
             tr = document.createElement('tr'),
             th = document.createElement('th'),
-            firstLetter = 'A'.charCodeAt(0);
+            firstLetter = 'A'.charCodeAt(0),
+            cols = battleShips.getBoardService().getCols();
 
         table.setAttribute('class', 'bordered');
         tr.append(th);
@@ -316,7 +374,7 @@ function htmlRenderer(battleShips, cols, rows) {
         }
         table.append(tr);
 
-        for (let i = 0; i <= rows - 1; i++) {
+        for (let i = 0; i <= battleShips.getBoardService().getRows() - 1; i++) {
             let tr = document.createElement('tr'),
                 th = document.createElement('th');
             th.innerText = i+1;
@@ -350,7 +408,7 @@ function htmlRenderer(battleShips, cols, rows) {
         button.setAttribute('type', 'button');
         button.innerText = 'Strike';
 
-        container.append(label);
+        container.innerHTML = label.outerHTML;
         container.append(input);
         container.append(button);
 
@@ -376,8 +434,26 @@ function htmlRenderer(battleShips, cols, rows) {
             renderAction();
         }
     };
-};
-// CONCATENATED MODULE: ./src/web.js
+}
+
+module.exports = HtmlRenderer;
+
+/***/ }),
+/* 4 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _battleships_BattleshipsGame__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(0);
+/* harmony import */ var _battleships_BattleshipsGame__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_battleships_BattleshipsGame__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _battleships_ShipService__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(1);
+/* harmony import */ var _battleships_ShipService__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_battleships_ShipService__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _battleships_BoardService__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(2);
+/* harmony import */ var _battleships_BoardService__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_battleships_BoardService__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _battleships_HtmlRenderer__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(3);
+/* harmony import */ var _battleships_HtmlRenderer__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_battleships_HtmlRenderer__WEBPACK_IMPORTED_MODULE_3__);
+
+
 
 
 
@@ -385,8 +461,10 @@ const BOARD_COLS = 10;
 const BOARD_ROWS = 10;
 const SHIPS = [5, 4, 4];
 
-let battleShips = battleShipsApp(SHIPS, BOARD_COLS, BOARD_ROWS),
-    renderer = htmlRenderer(battleShips, BOARD_COLS, BOARD_ROWS);
+let boardServiceInstance = _battleships_BoardService__WEBPACK_IMPORTED_MODULE_2___default()(BOARD_COLS, BOARD_ROWS),
+    shipServiceInstance = _battleships_ShipService__WEBPACK_IMPORTED_MODULE_1___default()(boardServiceInstance),
+    battleShips = _battleships_BattleshipsGame__WEBPACK_IMPORTED_MODULE_0___default()(shipServiceInstance, SHIPS),
+    renderer = _battleships_HtmlRenderer__WEBPACK_IMPORTED_MODULE_3___default()(battleShips);
 
 battleShips.onInit(function () {
     renderer.render();
