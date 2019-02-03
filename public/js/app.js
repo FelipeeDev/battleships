@@ -95,6 +95,7 @@ function BattleShipsApp(shipService, ships) {
             onSelect: [],
             onResult: [],
         },
+        fieldsSelected = {},
         moves = 0,
         shipCount = ships.length,
         shipsSank = 0;
@@ -102,6 +103,7 @@ function BattleShipsApp(shipService, ships) {
     let init = function() {
         moves = 0;
         shipsSank = 0;
+        fieldsSelected = {};
         boardService.reset();
         for (let i in ships) {
             shipService.makeShip(ships[i]);
@@ -163,6 +165,11 @@ function BattleShipsApp(shipService, ships) {
 
             triggerEvent('onSelect', col, row, hit);
 
+            if (fieldsSelected[col + '_' + row]) {
+                return;
+            }
+
+            fieldsSelected[col + '_' + row] = true;
             moves++;
 
             if (!hit) {
@@ -188,7 +195,7 @@ function BattleShipsApp(shipService, ships) {
             let colChar = value[0],
                 col = null,
                 row = parseInt(value.slice(1)),
-                cols = boardService.getCols(),
+                cols = boardService.colsCount(),
                 letterCode = 'A'.charCodeAt(0);
 
             if (colChar) {
@@ -203,7 +210,7 @@ function BattleShipsApp(shipService, ships) {
             }
 
             if (col !== null && col >= 0 && col <= cols - 1
-                && !isNaN(row) && row >= 1 && row - 1 <= boardService.getRows() - 1
+                && !isNaN(row) && row >= 1 && row - 1 <= boardService.rowsCount() - 1
             ) {
                 this.selectField(col, row - 1);
 
@@ -211,6 +218,9 @@ function BattleShipsApp(shipService, ships) {
             }
 
             throw "There is no field: " + value + ". Try again!";
+        },
+        getMoves() {
+            return moves;
         },
         getBoardService() {
             return boardService;
@@ -244,8 +254,8 @@ function ShipService (boardService) {
                 ship = createShip(len);
 
             if (boardService.isOccupied(col, row)
-                || (horizontal && col + len > boardService.getCols())
-                || (!horizontal && row + len > boardService.getRows())
+                || (horizontal && col + len > boardService.colsCount())
+                || (!horizontal && row + len > boardService.rowsCount())
             ) {
                 return this.makeShip(len);
             }
@@ -301,9 +311,6 @@ function BoardService(cols, rows) {
             fields = shuffleFields();
             occupied = {};
         },
-        getFields: function () {
-            return fields;
-        },
         occupy: function (col, row, ship) {
             occupied[col + '_' + row] = ship;
         },
@@ -313,10 +320,10 @@ function BoardService(cols, rows) {
         get: function (col, row) {
             return occupied[col + '_' + row];
         },
-        getCols: function () {
+        colsCount: function () {
             return cols;
         },
-        getRows: function () {
+        rowsCount: function () {
             return rows;
         },
         shiftField: function () {
@@ -362,7 +369,7 @@ function HtmlRenderer(battleShips) {
             tr = document.createElement('tr'),
             th = document.createElement('th'),
             firstLetter = 'A'.charCodeAt(0),
-            cols = battleShips.getBoardService().getCols();
+            cols = battleShips.getBoardService().colsCount();
 
         table.setAttribute('class', 'bordered');
         tr.append(th);
@@ -374,7 +381,7 @@ function HtmlRenderer(battleShips) {
         }
         table.append(tr);
 
-        for (let i = 0; i <= battleShips.getBoardService().getRows() - 1; i++) {
+        for (let i = 0; i <= battleShips.getBoardService().rowsCount() - 1; i++) {
             let tr = document.createElement('tr'),
                 th = document.createElement('th');
             th.innerText = i+1;
@@ -403,7 +410,7 @@ function HtmlRenderer(battleShips) {
 
         label.setAttribute('for', TARGET);
         input.setAttribute('id', TARGET);
-        input.setAttribute('placeholder', 'eg. type: b6');
+        input.setAttribute('placeholder', 'i.e. type: b6');
         button.setAttribute('id', TARGET_ACTION);
         button.setAttribute('type', 'button');
         button.innerText = 'Strike';
@@ -419,6 +426,11 @@ function HtmlRenderer(battleShips) {
         showMessage: function (message) {
             document.getElementById('message-container').innerText = message;
         },
+        endGameConfirmation() {
+            if (confirm('Congrats! You have sank all the ships in ' + battleShips.getMoves() + ' moves! Do you want to play again?')) {
+                battleShips.run();
+            }
+        },
         clearOnClick: function (col, row, hit) {
             let td = document.getElementById(col + '_' + row);
             td.setAttribute('onclick', '');
@@ -427,7 +439,6 @@ function HtmlRenderer(battleShips) {
                 return;
             }
             td.setAttribute('class', 'missed');
-
         },
         render: function () {
             renderBoard();
@@ -471,12 +482,10 @@ battleShips.onInit(function () {
 }).onSelect(function (col, row, hit) {
     renderer.clearOnClick(col, row, hit);
 }).onResult(function (result) {
-    if ('finished' === result
-        && confirm('Congrats! You have sank all the ships! Do you want to play again?')
-    ) {
-        battleShips.run();
-        return;
+    if ('finished' === result) {
+        renderer.endGameConfirmation();
     }
+
     renderer.showMessage(result);
 }).run();
 

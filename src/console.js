@@ -1,6 +1,6 @@
 let battleShipsApp = require("./battleships/BattleshipsGame"),
     shipService = require("./battleships/ShipService"),
-    boardService = require("./battleships/BoardService");
+    boardService = require("./battleships/BoardService"),
     consoleInterface = require("./battleships/ConsoleInterface");
 
 const BOARD_COLS = 10;

@@ -17,12 +17,10 @@ battleShips.onInit(function () {
 }).onSelect(function (col, row, hit) {
     renderer.clearOnClick(col, row, hit);
 }).onResult(function (result) {
-    if ('finished' === result
-        && confirm('Congrats! You have sank all the ships! Do you want to play again?')
-    ) {
-        battleShips.run();
-        return;
+    if ('finished' === result) {
+        renderer.endGameConfirmation();
     }
+
     renderer.showMessage(result);
 }).run();
 

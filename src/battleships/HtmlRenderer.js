@@ -67,7 +67,7 @@ function HtmlRenderer(battleShips) {
 
         label.setAttribute('for', TARGET);
         input.setAttribute('id', TARGET);
-        input.setAttribute('placeholder', 'eg. type: b6');
+        input.setAttribute('placeholder', 'i.e. type: b6');
         button.setAttribute('id', TARGET_ACTION);
         button.setAttribute('type', 'button');
         button.innerText = 'Strike';
@@ -83,6 +83,11 @@ function HtmlRenderer(battleShips) {
         showMessage: function (message) {
             document.getElementById('message-container').innerText = message;
         },
+        endGameConfirmation() {
+            if (confirm('Congrats! You have sank all the ships in ' + battleShips.getMoves() + ' moves! Do you want to play again?')) {
+                battleShips.run();
+            }
+        },
         clearOnClick: function (col, row, hit) {
             let td = document.getElementById(col + '_' + row);
             td.setAttribute('onclick', '');
@@ -91,7 +96,6 @@ function HtmlRenderer(battleShips) {
                 return;
             }
             td.setAttribute('class', 'missed');
-
         },
         render: function () {
             renderBoard();

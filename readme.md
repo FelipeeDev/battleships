@@ -42,5 +42,5 @@ then:
 For run the tests (after build) type in console:
 
 ```
-> npm run test
+> npm test
 ```

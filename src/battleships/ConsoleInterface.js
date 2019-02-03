@@ -6,7 +6,7 @@ function ConsoleInterface (battleShips) {
         });
 
     let getUserTarget = function () {
-        rl.question('Type target (ie. b6): ', (answer) => {
+        rl.question('Type target (i.e. b6): ', (answer) => {
             battleShips.selectFieldLiteraly(answer);
         });
     };
@@ -18,16 +18,9 @@ function ConsoleInterface (battleShips) {
             getUserTarget();
         },
         resolveResult: function (result) {
-            if ('finished' === result
-                && confirm('Congrats! You have sank all the ships! Do you want to play again?')
-            ) {
-                rl.question('Congrats! You have sank all the ships! Do you want to play again [yes]? ', (answer) => {
-                    if ('yes' === answer) {
-                        battleShips.run();
-                        return;
-                    }
-                    rl.close();
-                });
+            if ('finished' === result ) {
+                rl.close();
+                console.log('Congrats! You have sank all the ships in ' + battleShips.getMoves() + ' moves!');
                 return;
             }
 

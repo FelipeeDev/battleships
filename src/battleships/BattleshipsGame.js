@@ -5,6 +5,7 @@ function BattleShipsApp(shipService, ships) {
             onSelect: [],
             onResult: [],
         },
+        fieldsSelected = {},
         moves = 0,
         shipCount = ships.length,
         shipsSank = 0;
@@ -12,6 +13,7 @@ function BattleShipsApp(shipService, ships) {
     let init = function() {
         moves = 0;
         shipsSank = 0;
+        fieldsSelected = {};
         boardService.reset();
         for (let i in ships) {
             shipService.makeShip(ships[i]);
@@ -73,6 +75,11 @@ function BattleShipsApp(shipService, ships) {
 
             triggerEvent('onSelect', col, row, hit);
 
+            if (fieldsSelected[col + '_' + row]) {
+                return;
+            }
+
+            fieldsSelected[col + '_' + row] = true;
             moves++;
 
             if (!hit) {
@@ -121,6 +128,9 @@ function BattleShipsApp(shipService, ships) {
             }
 
             throw "There is no field: " + value + ". Try again!";
+        },
+        getMoves() {
+            return moves;
         },
         getBoardService() {
             return boardService;
