@@ -155,9 +155,7 @@ function battleShipsApp(ships, cols = 10, rows = 10) {
         for (let i in ships) {
             makeShip(ships[i]);
         }
-        for (let i in observers.onInit) {
-            observers.onInit[i]();
-        }
+        triggerEvent('onInit')
     };
 
     let shuffleFields = function () {
@@ -172,10 +170,26 @@ function battleShipsApp(ships, cols = 10, rows = 10) {
         return arr;
     };
 
-    let gameFinished = function () {
-        for (let i in observers.onResult) {
-            observers.onResult[i]('finished');
+    let triggerEvent = function (event, ...args) {
+        for (let i in observers[event]) {
+            observers[event][i](...args);
         }
+    };
+
+    let shotMissed = function () {
+        triggerEvent('onResult', 'missed');
+    };
+
+    let shipHit = function () {
+        triggerEvent('onResult', 'hit');
+    };
+
+    let shipSank = function () {
+        triggerEvent('onResult', 'sank');
+    };
+
+    let gameFinished = function () {
+        triggerEvent('onResult', 'finished');
     };
 
     let registerObserver = function (event, observer) {
@@ -188,8 +202,6 @@ function battleShipsApp(ships, cols = 10, rows = 10) {
 
         observers[event].push(observer);
     };
-
-
 
     return {
         run: function () {
@@ -211,26 +223,20 @@ function battleShipsApp(ships, cols = 10, rows = 10) {
             let key = col + '_' + row,
                 hit = occupiedFields[key];
 
-            for (let i in observers.onInit) {
-                observers.onSelect[i](col, row, hit);
-            }
+            triggerEvent('onSelect', col, row, hit);
 
             moves++;
 
 
             if (!hit) {
-                for (let i in observers.onResult) {
-                    observers.onResult[i]('missed');
-                }
+                shotMissed();
                 return;
             }
 
             occupiedFields[key].hit++;
 
             if (occupiedFields[key].isSank()) {
-                for (let i in observers.onResult) {
-                    observers.onResult[i]('sank');
-                }
+                shipSank();
                 shipsSank++;
                 if (shipsSank >= shipCount) {
                     gameFinished();
@@ -238,15 +244,43 @@ function battleShipsApp(ships, cols = 10, rows = 10) {
                 return;
             }
 
-            for (let i in observers.onResult) {
-                observers.onResult[i]('hit');
+            shipHit();
+        },
+        selectFieldLiteraly(value) {
+            let colChar = value[0],
+                col = null,
+                row = parseInt(value.slice(1)),
+                letterCode = 'A'.charCodeAt(0);
+
+            if (colChar) {
+                let colCharCode = colChar.toUpperCase().charCodeAt(0);
+                for (let i = 0; i <= cols - 1; i++) {
+                    if (colCharCode === letterCode) {
+                        col = i;
+                        break;
+                    }
+                    letterCode++;
+                }
             }
+
+            if (col !== null && col >= 0 && col <= cols - 1
+                && !isNaN(row) && row >= 1 && row - 1 <= rows - 1
+            ) {
+                this.selectField(col, row - 1);
+
+                return
+            }
+
+            throw "There is no field: " + value + ". Try again!";
         }
     }
 };
 
 // CONCATENATED MODULE: ./src/battleships/htmlRenderer.js
 function htmlRenderer(battleShips, cols, rows) {
+    const TARGET = 'target';
+    const TARGET_ACTION = 'target-action';
+
     let addEventHandlers = function () {
         let elements = document.getElementsByClassName('active');
         for (let i = 0; i <= 99; i++) {
@@ -255,6 +289,72 @@ function htmlRenderer(battleShips, cols, rows) {
                 battleShips.selectField(td.getAttribute('data-col'), td.getAttribute('data-row'));
             };
         }
+    };
+
+    let fireAction = function () {
+        try {
+            battleShips.selectFieldLiteraly(document.getElementById(TARGET).value);
+        } catch (exception) {
+            alert(exception);
+        }
+    };
+
+    let renderBoard = function () {
+        let gameContainer = document.getElementById('game-container'),
+            table = document.createElement('table'),
+            tr = document.createElement('tr'),
+            th = document.createElement('th'),
+            firstLetter = 'A'.charCodeAt(0);
+
+        table.setAttribute('class', 'bordered');
+        tr.append(th);
+
+        for (let i = 0; i <= cols - 1; i++) {
+            let th = document.createElement('th');
+            th.innerText = String.fromCharCode(firstLetter++);
+            tr.append(th);
+        }
+        table.append(tr);
+
+        for (let i = 0; i <= rows - 1; i++) {
+            let tr = document.createElement('tr'),
+                th = document.createElement('th');
+            th.innerText = i+1;
+            tr.append(th);
+
+            for (let j = 0; j <= cols - 1; j++) {
+                let td = document.createElement('td');
+                td.setAttribute('id', j + '_' + i);
+                td.setAttribute('class', 'active');
+                td.setAttribute('data-row', i);
+                td.setAttribute('data-col', j);
+                tr.append(td);
+            }
+            table.append(tr);
+        }
+
+        gameContainer.innerHTML = table.outerHTML;
+        addEventHandlers();
+    };
+
+    let renderAction = function() {
+        let container = document.getElementById('action-container'),
+            label = document.createElement('label'),
+            input = document.createElement('input'),
+            button = document.createElement('button');
+
+        label.setAttribute('for', TARGET);
+        input.setAttribute('id', TARGET);
+        input.setAttribute('placeholder', 'eg. type: b6');
+        button.setAttribute('id', TARGET_ACTION);
+        button.setAttribute('type', 'button');
+        button.innerText = 'Strike';
+
+        container.append(label);
+        container.append(input);
+        container.append(button);
+
+        document.getElementById(TARGET_ACTION).onclick = fireAction;
     };
 
     return {
@@ -272,41 +372,8 @@ function htmlRenderer(battleShips, cols, rows) {
 
         },
         render: function () {
-            let gameContainer = document.getElementById('game-container'),
-                table = document.createElement('table'),
-                tr = document.createElement('tr'),
-                th = document.createElement('th'),
-                firstLetter = 'A'.charCodeAt(0);
-
-            table.setAttribute('class', 'bordered');
-            tr.append(th);
-
-            for (let i = 0; i <= cols - 1; i++) {
-                let th = document.createElement('th');
-                th.innerText = String.fromCharCode(firstLetter++);
-                tr.append(th);
-            }
-            table.append(tr);
-
-            for (let i = 0; i <= rows - 1; i++) {
-                let tr = document.createElement('tr'),
-                    th = document.createElement('th');
-                th.innerText = i+1;
-                tr.append(th);
-
-                for (let j = 0; j <= cols - 1; j++) {
-                    let td = document.createElement('td');
-                    td.setAttribute('id', j + '_' + i);
-                    td.setAttribute('class', 'active');
-                    td.setAttribute('data-row', i);
-                    td.setAttribute('data-col', j);
-                    tr.append(td);
-                }
-                table.append(tr);
-            }
-
-            gameContainer.innerHTML = table.outerHTML;
-            addEventHandlers();
+            renderBoard();
+            renderAction();
         }
     };
 };
@@ -316,8 +383,9 @@ function htmlRenderer(battleShips, cols, rows) {
 
 const BOARD_COLS = 10;
 const BOARD_ROWS = 10;
+const SHIPS = [5, 4, 4];
 
-let battleShips = battleShipsApp([5, 4, 4], BOARD_COLS, BOARD_ROWS),
+let battleShips = battleShipsApp(SHIPS, BOARD_COLS, BOARD_ROWS),
     renderer = htmlRenderer(battleShips, BOARD_COLS, BOARD_ROWS);
 
 battleShips.onInit(function () {

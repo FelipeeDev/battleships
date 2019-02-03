@@ -2,7 +2,9 @@
   "name": "battleships",
   "version": "0.0.1",
   "private": true,
+  "scripts": { "test": "jasmine" },
   "devDependencies": {
+    "jasmine": "^3.3.1",
     "webpack": "^4.29.0",
     "webpack-cli": "^3.2.1"
   }

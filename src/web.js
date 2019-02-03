@@ -3,8 +3,9 @@ import htmlRenderer from "./battleships/htmlRenderer";
 
 const BOARD_COLS = 10;
 const BOARD_ROWS = 10;
+const SHIPS = [5, 4, 4];
 
-let battleShips = battleShipsApp([5, 4, 4], BOARD_COLS, BOARD_ROWS),
+let battleShips = battleShipsApp(SHIPS, BOARD_COLS, BOARD_ROWS),
     renderer = htmlRenderer(battleShips, BOARD_COLS, BOARD_ROWS);
 
 battleShips.onInit(function () {

@@ -61,9 +61,7 @@ export default function battleShipsApp(ships, cols = 10, rows = 10) {
         for (let i in ships) {
             makeShip(ships[i]);
         }
-        for (let i in observers.onInit) {
-            observers.onInit[i]();
-        }
+        triggerEvent('onInit')
     };
 
     let shuffleFields = function () {
@@ -78,10 +76,26 @@ export default function battleShipsApp(ships, cols = 10, rows = 10) {
         return arr;
     };
 
-    let gameFinished = function () {
-        for (let i in observers.onResult) {
-            observers.onResult[i]('finished');
+    let triggerEvent = function (event, ...args) {
+        for (let i in observers[event]) {
+            observers[event][i](...args);
         }
+    };
+
+    let shotMissed = function () {
+        triggerEvent('onResult', 'missed');
+    };
+
+    let shipHit = function () {
+        triggerEvent('onResult', 'hit');
+    };
+
+    let shipSank = function () {
+        triggerEvent('onResult', 'sank');
+    };
+
+    let gameFinished = function () {
+        triggerEvent('onResult', 'finished');
     };
 
     let registerObserver = function (event, observer) {
@@ -94,8 +108,6 @@ export default function battleShipsApp(ships, cols = 10, rows = 10) {
 
         observers[event].push(observer);
     };
-
-
 
     return {
         run: function () {
@@ -117,26 +129,20 @@ export default function battleShipsApp(ships, cols = 10, rows = 10) {
             let key = col + '_' + row,
                 hit = occupiedFields[key];
 
-            for (let i in observers.onInit) {
-                observers.onSelect[i](col, row, hit);
-            }
+            triggerEvent('onSelect', col, row, hit);
 
             moves++;
 
 
             if (!hit) {
-                for (let i in observers.onResult) {
-                    observers.onResult[i]('missed');
-                }
+                shotMissed();
                 return;
             }
 
             occupiedFields[key].hit++;
 
             if (occupiedFields[key].isSank()) {
-                for (let i in observers.onResult) {
-                    observers.onResult[i]('sank');
-                }
+                shipSank();
                 shipsSank++;
                 if (shipsSank >= shipCount) {
                     gameFinished();
@@ -144,9 +150,34 @@ export default function battleShipsApp(ships, cols = 10, rows = 10) {
                 return;
             }
 
-            for (let i in observers.onResult) {
-                observers.onResult[i]('hit');
+            shipHit();
+        },
+        selectFieldLiteraly(value) {
+            let colChar = value[0],
+                col = null,
+                row = parseInt(value.slice(1)),
+                letterCode = 'A'.charCodeAt(0);
+
+            if (colChar) {
+                let colCharCode = colChar.toUpperCase().charCodeAt(0);
+                for (let i = 0; i <= cols - 1; i++) {
+                    if (colCharCode === letterCode) {
+                        col = i;
+                        break;
+                    }
+                    letterCode++;
+                }
             }
+
+            if (col !== null && col >= 0 && col <= cols - 1
+                && !isNaN(row) && row >= 1 && row - 1 <= rows - 1
+            ) {
+                this.selectField(col, row - 1);
+
+                return
+            }
+
+            throw "There is no field: " + value + ". Try again!";
         }
     }
 };
