@@ -19,9 +19,6 @@ function BoardService(cols, rows) {
             fields = shuffleFields();
             occupied = {};
         },
-        getFields: function () {
-            return fields;
-        },
         occupy: function (col, row, ship) {
             occupied[col + '_' + row] = ship;
         },
@@ -31,10 +28,10 @@ function BoardService(cols, rows) {
         get: function (col, row) {
             return occupied[col + '_' + row];
         },
-        getCols: function () {
+        colsCount: function () {
             return cols;
         },
-        getRows: function () {
+        rowsCount: function () {
             return rows;
         },
         shiftField: function () {

@@ -26,7 +26,7 @@ function HtmlRenderer(battleShips) {
             tr = document.createElement('tr'),
             th = document.createElement('th'),
             firstLetter = 'A'.charCodeAt(0),
-            cols = battleShips.getBoardService().getCols();
+            cols = battleShips.getBoardService().colsCount();
 
         table.setAttribute('class', 'bordered');
         tr.append(th);
@@ -38,7 +38,7 @@ function HtmlRenderer(battleShips) {
         }
         table.append(tr);
 
-        for (let i = 0; i <= battleShips.getBoardService().getRows() - 1; i++) {
+        for (let i = 0; i <= battleShips.getBoardService().rowsCount() - 1; i++) {
             let tr = document.createElement('tr'),
                 th = document.createElement('th');
             th.innerText = i+1;

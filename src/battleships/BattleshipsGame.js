@@ -98,7 +98,7 @@ function BattleShipsApp(shipService, ships) {
             let colChar = value[0],
                 col = null,
                 row = parseInt(value.slice(1)),
-                cols = boardService.getCols(),
+                cols = boardService.colsCount(),
                 letterCode = 'A'.charCodeAt(0);
 
             if (colChar) {
@@ -113,7 +113,7 @@ function BattleShipsApp(shipService, ships) {
             }
 
             if (col !== null && col >= 0 && col <= cols - 1
-                && !isNaN(row) && row >= 1 && row - 1 <= boardService.getRows() - 1
+                && !isNaN(row) && row >= 1 && row - 1 <= boardService.rowsCount() - 1
             ) {
                 this.selectField(col, row - 1);
 

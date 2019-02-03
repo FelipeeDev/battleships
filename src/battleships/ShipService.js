@@ -18,8 +18,8 @@ function ShipService (boardService) {
                 ship = createShip(len);
 
             if (boardService.isOccupied(col, row)
-                || (horizontal && col + len > boardService.getCols())
-                || (!horizontal && row + len > boardService.getRows())
+                || (horizontal && col + len > boardService.colsCount())
+                || (!horizontal && row + len > boardService.rowsCount())
             ) {
                 return this.makeShip(len);
             }

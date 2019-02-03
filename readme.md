@@ -23,7 +23,7 @@ From the console run:
 > node src/console.js
 ```
 
-### Build
+## Build
 
 First run from console in the application's main directory:
 
@@ -37,7 +37,7 @@ then:
 > webpack
 ```
 
-### Testing
+## Testing
 
 For run the tests (after build) type in console:
 
