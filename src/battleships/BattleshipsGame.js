@@ -109,13 +109,16 @@ function BattleShipsApp(shipService, ships) {
                 letterCode = 'A'.charCodeAt(0);
 
             if (colChar) {
-                let colCharCode = colChar.toUpperCase().charCodeAt(0);
-                for (let i = 0; i <= cols - 1; i++) {
-                    if (colCharCode === letterCode) {
-                        col = i;
-                        break;
+                try {
+                    let colCharCode = colChar.toUpperCase().charCodeAt(0);
+                    for (let i = 0; i <= cols - 1; i++) {
+                        if (colCharCode === letterCode) {
+                            col = i;
+                            break;
+                        }
+                        letterCode++;
                     }
-                    letterCode++;
+                } catch (error) {
                 }
             }
 

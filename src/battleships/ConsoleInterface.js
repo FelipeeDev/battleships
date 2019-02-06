@@ -1,13 +1,14 @@
 function ConsoleInterface (battleShips) {
-    let readline = require('readline'),
-        rl = readline.createInterface({
-            input: process.stdin,
-            output: process.stdout
-        });
-
+    let si = process.stdin;
+    si.setEncoding('utf-8');
     let getUserTarget = function () {
-        rl.question('Type target (i.e. b6): ', (answer) => {
-            battleShips.selectFieldLiteraly(answer);
+        console.log('Type target (i.e. b6): ');
+        si.on('data', (answer) => {
+            try {
+                battleShips.selectFieldLiteraly(answer.replace(/(\r\n|\n|\r)/gm, ""));
+            } catch (error) {
+                console.log(error);
+            }
         });
     };
 
@@ -19,8 +20,8 @@ function ConsoleInterface (battleShips) {
         },
         resolveResult: function (result) {
             if ('finished' === result ) {
-                rl.close();
                 console.log('Congrats! You have sank all the ships in ' + battleShips.getMoves() + ' moves!');
+                process.exit();
                 return;
             }
 
